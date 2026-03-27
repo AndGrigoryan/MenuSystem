@@ -21,6 +21,9 @@
 
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
+#include "OnlineSubsystemUtils.h"
+
 
 #include "Kismet/KismetSystemLibrary.h"
 
@@ -69,6 +72,11 @@ AMenuSystemCharacter::AMenuSystemCharacter()
 	OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject
 	(
 		this, &AMenuSystemCharacter::OnDestroySessionComplete
+	);
+
+	OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject
+	(
+		this, &AMenuSystemCharacter::OnFindSessionsComplete
 	);
 
 
@@ -208,6 +216,34 @@ void AMenuSystemCharacter::CreateGameSession()
 	CreateSessionInternal();
 }
 
+void AMenuSystemCharacter::JoinGameSession()
+{
+	// Find game sessions
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
+	if (FindSessionsCompleteDelegateHandle.IsValid())
+	{
+		OnlineSessionInterface->ClearOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegateHandle);
+		FindSessionsCompleteDelegateHandle.Reset();
+	}
+
+	FindSessionsCompleteDelegateHandle = OnlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(OnFindSessionsCompleteDelegate);
+
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->bIsLanQuery = false;
+	SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
+	
+	const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+
+	OnlineSessionInterface->FindSessions(*localPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
+
+}
+
 void AMenuSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
 	if (!IsValid(GetWorld()))
@@ -261,6 +297,23 @@ void AMenuSystemCharacter::OnDestroySessionComplete(FName SessionName, bool bWas
 	}
 }
 
+void AMenuSystemCharacter::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	for (auto res : SessionSearch->SearchResults)
+	{
+		FString id = res.GetSessionIdStr();
+		FString user = res.Session.OwningUserName;
+		if (GetWorld())
+		{
+			UKismetSystemLibrary::PrintString
+			(
+				GetWorld(),
+				FString::Printf(TEXT("Id: %s, User: %s"), *id, *user)
+			);
+		}
+	}
+}
+
 void AMenuSystemCharacter::CreateSessionInternal()
 {
 	if (!IsValid(GetWorld()))
@@ -284,6 +337,7 @@ void AMenuSystemCharacter::CreateSessionInternal()
 	sessionSettings->bShouldAdvertise = true;
 	sessionSettings->bUsesPresence = true;
 	sessionSettings->bUseLobbiesIfAvailable = true;
+	sessionSettings->Set(FName("MatchType"), FString("FreeForAll"), EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 	const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 

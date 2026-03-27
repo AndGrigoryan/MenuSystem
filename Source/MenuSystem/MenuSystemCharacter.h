@@ -107,11 +107,17 @@ protected:
 	UFUNCTION(BlueprintCallable)
 	void CreateGameSession();
 
+	UFUNCTION(BlueprintCallable)
+	void JoinGameSession();
+
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
 
 	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
 
+	void OnFindSessionsComplete(bool bWasSuccessful);
+
 	void CreateSessionInternal();
+
 	 
 private:
 
@@ -120,6 +126,11 @@ private:
 
 	FDelegateHandle DestroySessionCompleteDelegateHandle;
 	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+
+	FDelegateHandle FindSessionsCompleteDelegateHandle;
+	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
 
 };
 
