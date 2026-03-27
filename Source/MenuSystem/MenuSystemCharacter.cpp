@@ -1,21 +1,30 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "MenuSystemCharacter.h"
+
 #include "Engine/LocalPlayer.h"
+
 #include "Camera/CameraComponent.h"
+
 #include "Components/CapsuleComponent.h"
+
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/Controller.h"
+
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
+
 #include "InputActionValue.h"
+
 #include "MenuSystem.h"
+
 #include "OnlineSubsystem.h"
 #include "OnlineSessionSettings.h"
 
-AMenuSystemCharacter::AMenuSystemCharacter() :
-	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMenuSystemCharacter::OnCreateSessionComplete))
+#include "Kismet/KismetSystemLibrary.h"
+
+AMenuSystemCharacter::AMenuSystemCharacter()
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -52,6 +61,16 @@ AMenuSystemCharacter::AMenuSystemCharacter() :
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
+	OnCreateSessionCompleteDelegate = FOnCreateSessionCompleteDelegate::CreateUObject
+	(
+		this, &AMenuSystemCharacter::OnCreateSessionComplete
+	);
+
+	OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject
+	(
+		this, &AMenuSystemCharacter::OnDestroySessionComplete
+	);
+
 
 	IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get();
 
@@ -59,13 +78,16 @@ AMenuSystemCharacter::AMenuSystemCharacter() :
 	{
 		OnlineSessionInterface = onlineSubsystem->GetSessionInterface();
 
-		if (GEngine)
+
+		if (GetWorld())
 		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				15.f,
-				FColor::Blue,
-				FString::Printf(TEXT("Found subsystem %s"), *onlineSubsystem->GetSubsystemName().ToString())
+			UKismetSystemLibrary::PrintString
+			(
+				GetWorld(),
+				FString::Printf(TEXT("Found subsystem %s"), *onlineSubsystem->GetSubsystemName().ToString()),
+				true,
+				true,
+				FLinearColor::Blue
 			);
 		}
 
@@ -167,10 +189,92 @@ void AMenuSystemCharacter::CreateGameSession()
 
 	if (existingSession != nullptr)
 	{
+		bCreateSessionOnDestroy = true;
+
+		if (DestroySessionCompleteDelegateHandle.IsValid())
+		{
+			OnlineSessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegateHandle);
+			DestroySessionCompleteDelegateHandle.Reset();
+		}
+
+		DestroySessionCompleteDelegateHandle =
+			OnlineSessionInterface->AddOnDestroySessionCompleteDelegate_Handle(OnDestroySessionCompleteDelegate);
+
+
 		OnlineSessionInterface->DestroySession(NAME_GameSession);
+		return;
 	}
 
-	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+	CreateSessionInternal();
+}
+
+void AMenuSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (!IsValid(GetWorld()))
+	{
+		return;
+	}
+
+	if (OnlineSessionInterface.IsValid() && CreateSessionCompleteDelegateHandle.IsValid())
+	{
+		OnlineSessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+		CreateSessionCompleteDelegateHandle.Reset();
+	}
+
+	UKismetSystemLibrary::PrintString
+	(
+		GetWorld(),
+		FString::Printf(TEXT("AMenuSystemCharacter::OnCreateSessionComplete %s success = %d"), *SessionName.ToString(), bWasSuccessful),
+		true,
+		true,
+		bWasSuccessful ? FLinearColor::Green : FLinearColor::Red
+	);
+
+}
+
+void AMenuSystemCharacter::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (!IsValid(GetWorld()))
+	{
+		return;
+	}
+
+	if (DestroySessionCompleteDelegateHandle.IsValid())
+	{
+		OnlineSessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegateHandle);
+		DestroySessionCompleteDelegateHandle.Reset();
+	}
+
+	UKismetSystemLibrary::PrintString
+	(
+		GetWorld(),
+		FString::Printf(TEXT("AMenuSystemCharacter::OnDestroySessionComplete %s success = %d"), *SessionName.ToString(), bWasSuccessful),
+		true,
+		true,
+		bWasSuccessful ? FLinearColor::Green : FLinearColor::Red
+	);
+
+	if (bCreateSessionOnDestroy)
+	{
+		bCreateSessionOnDestroy = false;
+		CreateSessionInternal();
+	}
+}
+
+void AMenuSystemCharacter::CreateSessionInternal()
+{
+	if (!IsValid(GetWorld()))
+	{
+		return;
+	}
+
+	if (CreateSessionCompleteDelegateHandle.IsValid())
+	{
+		OnlineSessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+		CreateSessionCompleteDelegateHandle.Reset();
+	}
+
+	CreateSessionCompleteDelegateHandle = OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(OnCreateSessionCompleteDelegate);
 
 	TSharedPtr<FOnlineSessionSettings> sessionSettings = MakeShareable(new FOnlineSessionSettings());
 	sessionSettings->bIsLANMatch = false;
@@ -179,37 +283,23 @@ void AMenuSystemCharacter::CreateGameSession()
 	sessionSettings->bAllowJoinViaPresence = true;
 	sessionSettings->bShouldAdvertise = true;
 	sessionSettings->bUsesPresence = true;
+	sessionSettings->bUseLobbiesIfAvailable = true;
 
 	const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 
-	OnlineSessionInterface->CreateSession(*localPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *sessionSettings);
-}
-
-void AMenuSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
-{
-	if (!bWasSuccessful)
+	if (!localPlayer || !localPlayer->GetPreferredUniqueNetId().IsValid())
 	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage
-			(
-				-1,
-				15.f,
-				FColor::Red,
-				FString(TEXT("Failed to create session!"))
-			);
-		}
+		UKismetSystemLibrary::PrintString
+		(
+			GetWorld(),
+			FString(TEXT("Invalid local player or localPlayer->GetPreferredUniqueNetId()")),
+			true,
+			true,
+			FLinearColor::Red
+		);
 		return;
 	}
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage
-		(
-			-1,
-			15.f,
-			FColor::Blue,
-			FString::Printf(TEXT("Created session: %s"), *SessionName.ToString())
-		);
-	}
+
+	OnlineSessionInterface->CreateSession(*localPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *sessionSettings);
 }

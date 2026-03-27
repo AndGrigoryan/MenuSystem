@@ -100,14 +100,26 @@ public:
 	// Pointer to the online session interface
 	IOnlineSessionPtr OnlineSessionInterface;
 
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
+	bool bCreateSessionOnDestroy = false;
+
 protected:
 	UFUNCTION(BlueprintCallable)
 	void CreateGameSession();
 
 	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+	void CreateSessionInternal();
 	 
 private:
 
-	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
+	FDelegateHandle CreateSessionCompleteDelegateHandle;
+	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
+
+	FDelegateHandle DestroySessionCompleteDelegateHandle;
+	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+
 };
 
