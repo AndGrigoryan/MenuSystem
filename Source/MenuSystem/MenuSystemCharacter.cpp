@@ -79,6 +79,11 @@ AMenuSystemCharacter::AMenuSystemCharacter()
 		this, &AMenuSystemCharacter::OnFindSessionsComplete
 	);
 
+	OnJoinSessionCompleteDelegate = FOnJoinSessionCompleteDelegate::CreateUObject
+	(
+		this, &AMenuSystemCharacter::OnJoinSessionComplete
+	);
+
 
 	IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get();
 
@@ -237,7 +242,7 @@ void AMenuSystemCharacter::JoinGameSession()
 	SessionSearch->MaxSearchResults = 10000;
 	SessionSearch->bIsLanQuery = false;
 	SessionSearch->QuerySettings.Set(SEARCH_LOBBIES, true, EOnlineComparisonOp::Equals);
-	
+
 	const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 
 	OnlineSessionInterface->FindSessions(*localPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
@@ -246,7 +251,9 @@ void AMenuSystemCharacter::JoinGameSession()
 
 void AMenuSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	if (!IsValid(GetWorld()))
+	UWorld* world = GetWorld();
+
+	if (!IsValid(world))
 	{
 		return;
 	}
@@ -259,12 +266,17 @@ void AMenuSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasS
 
 	UKismetSystemLibrary::PrintString
 	(
-		GetWorld(),
+		world,
 		FString::Printf(TEXT("AMenuSystemCharacter::OnCreateSessionComplete %s success = %d"), *SessionName.ToString(), bWasSuccessful),
 		true,
 		true,
 		bWasSuccessful ? FLinearColor::Green : FLinearColor::Red
 	);
+
+	if (bWasSuccessful)
+	{
+		world->ServerTravel(FString("/Game/ThirdPerson/Maps/Lobby?listen"));
+	}
 
 }
 
@@ -299,17 +311,63 @@ void AMenuSystemCharacter::OnDestroySessionComplete(FName SessionName, bool bWas
 
 void AMenuSystemCharacter::OnFindSessionsComplete(bool bWasSuccessful)
 {
+	if (!IsValid(GetWorld()))
+	{
+		return;
+	}
+
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
 	for (auto res : SessionSearch->SearchResults)
 	{
 		FString id = res.GetSessionIdStr();
 		FString user = res.Session.OwningUserName;
-		if (GetWorld())
+
+		FString matchType;
+		res.Session.SessionSettings.Get(FName("MatchType"), matchType);
+
+		UKismetSystemLibrary::PrintString
+		(
+			GetWorld(),
+			FString::Printf(TEXT("Id: %s, User: %s"), *id, *user)
+		);
+
+		if (matchType == FString("FreeForAll"))
 		{
 			UKismetSystemLibrary::PrintString
 			(
 				GetWorld(),
-				FString::Printf(TEXT("Id: %s, User: %s"), *id, *user)
+				FString::Printf(TEXT("Joining Match Type: %s"), *matchType)
 			);
+
+			if (JoinSessionCompleteDelegateHandle.IsValid())
+			{
+				OnlineSessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
+				JoinSessionCompleteDelegateHandle.Reset();
+			}
+
+			JoinSessionCompleteDelegateHandle = OnlineSessionInterface->AddOnJoinSessionCompleteDelegate_Handle(OnJoinSessionCompleteDelegate);
+
+			const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+
+			if (!localPlayer || !localPlayer->GetPreferredUniqueNetId().IsValid())
+			{
+				UKismetSystemLibrary::PrintString
+				(
+					GetWorld(),
+					FString(TEXT("Invalid local player or localPlayer->GetPreferredUniqueNetId()")),
+					true,
+					true,
+					FLinearColor::Red
+				);
+				return;
+			}
+
+
+			OnlineSessionInterface->JoinSession(*localPlayer->GetPreferredUniqueNetId(), NAME_GameSession, res);
 		}
 	}
 }
@@ -356,4 +414,32 @@ void AMenuSystemCharacter::CreateSessionInternal()
 
 
 	OnlineSessionInterface->CreateSession(*localPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *sessionSettings);
+}
+
+void AMenuSystemCharacter::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
+{
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+
+	FString address;
+
+	if (OnlineSessionInterface->GetResolvedConnectString(NAME_GameSession, address))
+	{
+		UKismetSystemLibrary::PrintString
+		(
+			GetWorld(),
+			FString::Printf(TEXT("Connect string: %s"), *address),
+			true,
+			true,
+			FLinearColor::Yellow
+		);
+	}
+	
+	APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
+	if (playerController)
+	{
+		playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+	}
 }

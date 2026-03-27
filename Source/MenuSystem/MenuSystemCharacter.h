@@ -118,6 +118,7 @@ protected:
 
 	void CreateSessionInternal();
 
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	 
 private:
 
@@ -131,6 +132,9 @@ private:
 	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
 
 	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+	FDelegateHandle JoinSessionCompleteDelegateHandle;
+	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
 
 };
 
