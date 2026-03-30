@@ -321,7 +321,7 @@ void AMenuSystemCharacter::OnFindSessionsComplete(bool bWasSuccessful)
 		return;
 	}
 
-	for (auto res : SessionSearch->SearchResults)
+	for (const auto& res : SessionSearch->SearchResults)
 	{
 		FString id = res.GetSessionIdStr();
 		FString user = res.Session.OwningUserName;
@@ -366,8 +366,8 @@ void AMenuSystemCharacter::OnFindSessionsComplete(bool bWasSuccessful)
 				return;
 			}
 
-
 			OnlineSessionInterface->JoinSession(*localPlayer->GetPreferredUniqueNetId(), NAME_GameSession, res);
+			break;
 		}
 	}
 }
@@ -418,14 +418,26 @@ void AMenuSystemCharacter::CreateSessionInternal()
 
 void AMenuSystemCharacter::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
 {
-	if (!OnlineSessionInterface.IsValid())
+	if (!OnlineSessionInterface.IsValid() ||
+		!IsValid(GetWorld()))
+	{
+		return;
+	}
+
+	if (JoinSessionCompleteDelegateHandle.IsValid())
+	{
+		OnlineSessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
+		JoinSessionCompleteDelegateHandle.Reset();
+	}
+
+	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
 		return;
 	}
 
 	FString address;
 
-	if (OnlineSessionInterface->GetResolvedConnectString(NAME_GameSession, address))
+	if (OnlineSessionInterface->GetResolvedConnectString(SessionName, address))
 	{
 		UKismetSystemLibrary::PrintString
 		(
@@ -435,11 +447,11 @@ void AMenuSystemCharacter::OnJoinSessionComplete(FName SessionName, EOnJoinSessi
 			true,
 			FLinearColor::Yellow
 		);
-	}
-	
-	APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
-	if (playerController)
-	{
-		playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+
+		APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
+		if (playerController)
+		{
+			playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+		}
 	}
 }
