@@ -106,6 +106,12 @@ AMenuSystemCharacter::AMenuSystemCharacter()
 
 	}
 
+	if(IsValid(GEngine))
+	{
+		GEngine->OnNetworkFailure().AddUObject(this, &AMenuSystemCharacter::OnNetworkFailure);
+		GEngine->OnTravelFailure().AddUObject(this, &AMenuSystemCharacter::OnTravelFailure);
+	}
+
 }
 
 void AMenuSystemCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -275,7 +281,7 @@ void AMenuSystemCharacter::OnCreateSessionComplete(FName SessionName, bool bWasS
 
 	if (bWasSuccessful)
 	{
-		world->ServerTravel(FString("/Game/ThirdPerson/Maps/Lobby?listen"));
+		world->ServerTravel(FString("/Game/ThirdPerson/Maps/Lobby?listen"), true);
 	}
 
 }
@@ -452,6 +458,68 @@ void AMenuSystemCharacter::OnJoinSessionComplete(FName SessionName, EOnJoinSessi
 		if (playerController)
 		{
 			playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+			//GetGameInstance()->ClientTravelToSession(0, SessionName);
 		}
 	}
+}
+
+void AMenuSystemCharacter::OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString)
+{
+	FString failureText;
+	switch (FailureType)
+	{
+	case ETravelFailure::NoLevel:
+		failureText = TEXT("NoLevel");
+		break;
+	case ETravelFailure::LoadMapFailure:
+		failureText = TEXT("LoadMapFailure");
+		break;
+	case ETravelFailure::InvalidURL:
+		failureText = TEXT("InvalidURL");
+		break;
+	default:
+		failureText = TEXT("Unknown");
+		break;
+	}
+
+
+	UKismetSystemLibrary::PrintString
+	(
+		GetWorld(),
+		FString::Printf(TEXT("Network failure: %s | %s"), *failureText, *ErrorString),
+		true,
+		true,
+		FLinearColor::Red,
+		10.f
+	);
+}
+
+void AMenuSystemCharacter::OnTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString)
+{
+	FString failureText;
+	switch (FailureType)
+	{
+	case ETravelFailure::NoLevel:
+		failureText = TEXT("NoLevel");
+		break;
+	case ETravelFailure::LoadMapFailure:
+		failureText = TEXT("LoadMapFailure");
+		break;
+	case ETravelFailure::InvalidURL:
+		failureText = TEXT("InvalidURL");
+		break;
+	default:
+		failureText = TEXT("Unknown");
+		break;
+	}
+
+	UKismetSystemLibrary::PrintString
+	(
+		GetWorld(),
+		FString::Printf(TEXT("Travel failure: %s | %s"), *failureText, *ErrorString),
+		true,
+		true,
+		FLinearColor::Red,
+		10.f
+	);
 }

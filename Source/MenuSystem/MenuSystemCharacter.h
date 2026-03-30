@@ -120,6 +120,9 @@ protected:
 
 	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
 	 
+	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+	void OnTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString);
 private:
 
 	FDelegateHandle CreateSessionCompleteDelegateHandle;
@@ -135,6 +138,7 @@ private:
 
 	FDelegateHandle JoinSessionCompleteDelegateHandle;
 	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
+
 
 };
 
