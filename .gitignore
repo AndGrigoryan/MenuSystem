@@ -31,9 +31,10 @@
 .vscode
 # VSCode History Files
 **/.history
-Content/Village/Maps/Village_BuiltData.uasset
-Content/Village/Maps/Village_Overview_BuiltData.uasset
-Content/Village/Maps/Village_SummerNightExample_BuiltData.uasset
+
 .idea/
 Plugins/Developer/RiderLink
 
+# Plugin specific ignores
+Plugins/MultiplayerSessions/Binaries/
+Plugins/MultiplayerSessions/Intermediate/
