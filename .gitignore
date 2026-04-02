@@ -38,3 +38,10 @@ Plugins/Developer/RiderLink
 # Plugin specific ignores
 Plugins/MultiplayerSessions/Binaries/
 Plugins/MultiplayerSessions/Intermediate/
+
+Plugins/AdvancedSessionsPlugin/AdvancedSessions/AdvancedSessions/Binaries/
+Plugins/AdvancedSessionsPlugin/AdvancedSessions/AdvancedSessions/Intermediate/
+
+
+Plugins/AdvancedSessionsPlugin/AdvancedSessions/AdvancedSteamSessions/Binaries/
+Plugins/AdvancedSessionsPlugin/AdvancedSessions/AdvancedSteamSessions/Intermediate/

@@ -64,53 +64,53 @@ AMenuSystemCharacter::AMenuSystemCharacter()
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 
-	OnCreateSessionCompleteDelegate = FOnCreateSessionCompleteDelegate::CreateUObject
-	(
-		this, &AMenuSystemCharacter::OnCreateSessionComplete
-	);
+	//OnCreateSessionCompleteDelegate = FOnCreateSessionCompleteDelegate::CreateUObject
+	//(
+	//	this, &AMenuSystemCharacter::OnCreateSessionComplete
+	//);
 
-	OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject
-	(
-		this, &AMenuSystemCharacter::OnDestroySessionComplete
-	);
+	//OnDestroySessionCompleteDelegate = FOnDestroySessionCompleteDelegate::CreateUObject
+	//(
+	//	this, &AMenuSystemCharacter::OnDestroySessionComplete
+	//);
 
-	OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject
-	(
-		this, &AMenuSystemCharacter::OnFindSessionsComplete
-	);
+	//OnFindSessionsCompleteDelegate = FOnFindSessionsCompleteDelegate::CreateUObject
+	//(
+	//	this, &AMenuSystemCharacter::OnFindSessionsComplete
+	//);
 
-	OnJoinSessionCompleteDelegate = FOnJoinSessionCompleteDelegate::CreateUObject
-	(
-		this, &AMenuSystemCharacter::OnJoinSessionComplete
-	);
-
-
-	IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get();
-
-	if (onlineSubsystem)
-	{
-		OnlineSessionInterface = onlineSubsystem->GetSessionInterface();
+	//OnJoinSessionCompleteDelegate = FOnJoinSessionCompleteDelegate::CreateUObject
+	//(
+	//	this, &AMenuSystemCharacter::OnJoinSessionComplete
+	//);
 
 
-		if (GetWorld())
-		{
-			UKismetSystemLibrary::PrintString
-			(
-				GetWorld(),
-				FString::Printf(TEXT("Found subsystem %s"), *onlineSubsystem->GetSubsystemName().ToString()),
-				true,
-				true,
-				FLinearColor::Blue
-			);
-		}
+	//IOnlineSubsystem* onlineSubsystem = IOnlineSubsystem::Get();
 
-	}
+	//if (onlineSubsystem)
+	//{
+	//	OnlineSessionInterface = onlineSubsystem->GetSessionInterface();
 
-	if(IsValid(GEngine))
-	{
-		GEngine->OnNetworkFailure().AddUObject(this, &AMenuSystemCharacter::OnNetworkFailure);
-		GEngine->OnTravelFailure().AddUObject(this, &AMenuSystemCharacter::OnTravelFailure);
-	}
+
+	//	if (GetWorld())
+	//	{
+	//		UKismetSystemLibrary::PrintString
+	//		(
+	//			GetWorld(),
+	//			FString::Printf(TEXT("Found subsystem %s"), *onlineSubsystem->GetSubsystemName().ToString()),
+	//			true,
+	//			true,
+	//			FLinearColor::Blue
+	//		);
+	//	}
+	//
+	//}
+
+	//if(IsValid(GEngine))
+	//{
+	//	GEngine->OnNetworkFailure().AddUObject(this, &AMenuSystemCharacter::OnNetworkFailure);
+	//	GEngine->OnTravelFailure().AddUObject(this, &AMenuSystemCharacter::OnTravelFailure);
+	//}
 
 }
 
