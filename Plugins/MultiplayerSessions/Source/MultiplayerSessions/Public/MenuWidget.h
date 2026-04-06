@@ -14,11 +14,13 @@ class MULTIPLAYERSESSIONS_API UMenuWidget : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void MenuSetup();
+	void MenuSetup(int32 InNumPublicConnections = 4, FString InMatchType = FString(TEXT("FreeForAll")));
 
 protected:
 
 	virtual bool Initialize() override;
+
+	virtual void NativeDestruct() override;
 
 private:
 
@@ -32,10 +34,17 @@ private:
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UButton> JoinButton;
 
+	int32 NumPublicConnections = 4;
+
+	FString MatchType = TEXT("FreeForAll");
+
 
 	UFUNCTION()
 	void HostButtonClicked();
 
 	UFUNCTION()
 	void JoinButtonClicked();
+
+	void MenuTearDown();
+
 };

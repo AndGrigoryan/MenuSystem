@@ -18,6 +18,8 @@ public:
 	// To handle session functionality. The Menu class will call these
 	//
 	void CreateSession(int32 NumPublicConnections, FString MatchType);
+
+	void CreateSessionInternal(int32 NumPublicConnections, FString MatchType);
 	
 	void FindSessions(int32 MaxSearchResults);
 
@@ -46,6 +48,8 @@ protected:
 
 private:
 	IOnlineSessionPtr SessionInterface;
+
+	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 
 	//
 	// To add to the Online Session Interface delegate list.

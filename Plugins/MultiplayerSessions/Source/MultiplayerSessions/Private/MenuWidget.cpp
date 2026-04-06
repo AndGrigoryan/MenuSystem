@@ -5,8 +5,12 @@
 #include "MultiplayerSessionsSubsystem.h"
 
 
-void UMenuWidget::MenuSetup()
+void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
 {
+	NumPublicConnections = InNumPublicConnections;
+
+	MatchType = InMatchType;
+
 	AddToViewport();
 
 	SetVisibility(ESlateVisibility::Visible);
@@ -61,17 +65,47 @@ bool UMenuWidget::Initialize()
 	return true;
 }
 
+void UMenuWidget::NativeDestruct()
+{
+	MenuTearDown();
+
+	Super::NativeDestruct();
+}
+
 void UMenuWidget::HostButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UMenuWidget::HostButtonClicked"));
 
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
-		MultiplayerSessionsSubsystem->CreateSession(4, FString("FreeForAll"));
+		MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);
 	}
 }
 
 void UMenuWidget::JoinButtonClicked()
 {
 	UE_LOG(LogTemp, Warning, TEXT("UMenuWidget::JoinButtonClicked"));
+}
+
+void UMenuWidget::MenuTearDown()
+{
+	RemoveFromParent();
+
+	UWorld* world = GetWorld();
+
+	if (!IsValid(world))
+	{
+		return;
+	}
+
+	APlayerController* playerController = world->GetFirstPlayerController();
+
+	if (IsValid(playerController))
+	{
+		FInputModeGameOnly inputModeGameOnlyData;
+
+		playerController->SetInputMode(inputModeGameOnlyData);
+		playerController->SetShowMouseCursor(false);
+	}
+
 }
