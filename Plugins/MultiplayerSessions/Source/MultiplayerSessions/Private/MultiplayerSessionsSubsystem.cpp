@@ -7,6 +7,6 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 	IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
 	if (subsystem)
 	{
-
+		SessionInterface = subsystem->GetSessionInterface();
 	}
 }

@@ -36,5 +36,5 @@
 Plugins/Developer/RiderLink
 
 # Plugin specific ignores
-Plugins/MultiplayerSessions/Binaries/
-Plugins/MultiplayerSessions/Intermediate/
+Plugins/*/Binaries/
+Plugins/*/Intermediate/
