@@ -43,6 +43,11 @@ void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
 		MultiplayerSessionsSubsystem = gameInstance->GetSubsystem<UMultiplayerSessionsSubsystem>();
 	}
 
+	if (IsValid(MultiplayerSessionsSubsystem))
+	{
+		MultiplayerSessionsSubsystem->MultiplayerOnCreateSessionComplete.AddDynamic(this, &UMenuWidget::OnCreateSession);
+	}
+
 }
 
 bool UMenuWidget::Initialize()
@@ -72,10 +77,34 @@ void UMenuWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
+void UMenuWidget::OnCreateSession(bool bWasSuccessful)
+{
+	if (!bWasSuccessful)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage
+			(
+				-1,
+				15.f,
+				FColor::Red,
+				FString(TEXT("Failed to Create Session!"))
+			);
+		}
+		return;
+	}
+	GEngine->AddOnScreenDebugMessage
+	(
+		-1,
+		15.f,
+		FColor::Yellow,
+		FString(TEXT("Session Created Successfully!"))
+	);
+
+}
+
 void UMenuWidget::HostButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UMenuWidget::HostButtonClicked"));
-
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
 		MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);

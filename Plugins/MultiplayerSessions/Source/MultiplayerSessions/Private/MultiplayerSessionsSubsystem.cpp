@@ -37,7 +37,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 
 	if (existingSession != nullptr)
 	{
-		//bCreateSessionOnDestroy = true;
+		bCreateSessionOnDestroy = true;
 
 		if (DestroySessionCompleteDelegateHandle.IsValid())
 		{
@@ -103,6 +103,9 @@ void UMultiplayerSessionsSubsystem::CreateSessionInternal(int32 NumPublicConnect
 	if (!bcreateSessionStarted)
 	{
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
+
+		// Broadcast  our own custom delegate
+		MultiplayerOnCreateSessionComplete.Broadcast(false);
 	}
 }
 
@@ -136,6 +139,8 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 		SessionInterface->ClearOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegateHandle);
 		CreateSessionCompleteDelegateHandle.Reset();
 	}
+
+	MultiplayerOnCreateSessionComplete.Broadcast(bWasSuccessful);
 
 	UKismetSystemLibrary::PrintString
 	(
