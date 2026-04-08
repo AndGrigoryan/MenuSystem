@@ -59,7 +59,7 @@ public:
 
 	FOnMultiplayerJoinSessionCompleteSignature OnMultiplayerJoinSessionComplete;
 
-	FOnMultiplayerFindSessionsCompleteSignature OnMultiplayerFindSessions;
+	FOnMultiplayerFindSessionsCompleteSignature OnMultiplayerFindSessionsComplete;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
 	bool bCreateSessionOnDestroy = false;
@@ -85,6 +85,8 @@ private:
 	IOnlineSessionPtr SessionInterface;
 
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
+
+	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 
 	//
 	// To add to the Online Session Interface delegate list.

@@ -6,6 +6,8 @@
 
 #include "OnlineSessionSettings.h"
 
+#include "OnlineSubsystem.h"
+
 
 UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -61,7 +63,7 @@ void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
 
 		MultiplayerSessionsSubsystem->OnMultiplayerJoinSessionComplete.AddUObject(this, &UMenuWidget::OnJoinSession);
 
-		MultiplayerSessionsSubsystem->OnMultiplayerFindSessions.AddUObject(this, &UMenuWidget::OnFindSession);
+		MultiplayerSessionsSubsystem->OnMultiplayerFindSessionsComplete.AddUObject(this, &UMenuWidget::OnFindSession);
 	}
 
 }
@@ -109,13 +111,16 @@ void UMenuWidget::OnCreateSession(bool bWasSuccessful)
 		}
 		return;
 	}
-	GEngine->AddOnScreenDebugMessage
-	(
-		-1,
-		15.f,
-		FColor::Yellow,
-		FString(TEXT("Session Created Successfully!"))
-	);
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage
+		(
+			-1,
+			15.f,
+			FColor::Yellow,
+			FString(TEXT("Session Created Successfully!"))
+		);
+	}
 
 }
 
@@ -129,10 +134,47 @@ void UMenuWidget::OnStartSession(bool bWasSuccessful)
 
 void UMenuWidget::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
+	IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
+	if (subsystem)
+	{
+		IOnlineSessionPtr sessionInterface = subsystem->GetSessionInterface();
+
+		if (sessionInterface.IsValid())
+		{
+			FString address;
+			
+			sessionInterface->GetResolvedConnectString(NAME_GameSession, address);
+
+			APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
+			if (playerController)
+			{
+				playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+			}
+		}
+	}
 }
 
 void UMenuWidget::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
+	if (!IsValid(MultiplayerSessionsSubsystem))
+	{
+		return;
+	}
+
+	for (const auto& res : SessionResults)
+	{
+		FString id = res.GetSessionIdStr();
+		FString user = res.Session.OwningUserName;
+
+		FString settingsValue;
+		res.Session.SessionSettings.Get(FName("MatchType"), settingsValue);
+
+		if (settingsValue == MatchType)
+		{
+			MultiplayerSessionsSubsystem->JoinSession(res);
+			return;
+		}
+	}
 }
 
 void UMenuWidget::HostButtonClicked()
@@ -145,7 +187,10 @@ void UMenuWidget::HostButtonClicked()
 
 void UMenuWidget::JoinButtonClicked()
 {
-	UE_LOG(LogTemp, Warning, TEXT("UMenuWidget::JoinButtonClicked"));
+	if (IsValid(MultiplayerSessionsSubsystem))
+	{
+		MultiplayerSessionsSubsystem->FindSessions(10000);
+	}
 }
 
 void UMenuWidget::MenuTearDown()
