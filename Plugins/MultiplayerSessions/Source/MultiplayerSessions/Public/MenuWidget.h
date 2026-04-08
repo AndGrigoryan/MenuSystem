@@ -2,6 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
+
 #include "MenuWidget.generated.h"
 
 
@@ -13,6 +16,8 @@ class MULTIPLAYERSESSIONS_API UMenuWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
+	UMenuWidget(const FObjectInitializer& ObjectInitializer);
+
 	UFUNCTION(BlueprintCallable)
 	void MenuSetup(int32 InNumPublicConnections = 4, FString InMatchType = FString(TEXT("FreeForAll")));
 
@@ -28,6 +33,17 @@ protected:
 
 	UFUNCTION()
 	void OnCreateSession(bool bWasSuccessful);
+
+	UFUNCTION()
+	void OnDestroySession(bool bWasSuccessful);
+
+	UFUNCTION()
+	void OnStartSession(bool bWasSuccessful);
+
+	void OnJoinSession(EOnJoinSessionCompleteResult::Type Result);
+
+	void OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful);
+
 
 private:
 

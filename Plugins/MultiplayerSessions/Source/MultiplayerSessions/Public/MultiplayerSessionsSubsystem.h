@@ -11,7 +11,15 @@
 // Declaring our own custom delegates for the Menu class to bind callbacks to
 //
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMultiplayerOnCreateSessionComplete, bool, bWasSuccessful);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMultiplayerCreateSessionCompleteSignature, bool, bWasSuccessful);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMultiplayerDestroySessionCompleteSignature, bool, bWasSuccessful);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMultiplayerStartSessionCompleteSignature, bool, bWasSuccessful);
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnMultiplayerJoinSessionCompleteSignature, EOnJoinSessionCompleteResult::Type Result);
+
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnMultiplayerFindSessionsCompleteSignature, const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful);
 
 
 UCLASS()
@@ -41,7 +49,17 @@ public:
 	//
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable)
-	FMultiplayerOnCreateSessionComplete MultiplayerOnCreateSessionComplete;
+	FOnMultiplayerCreateSessionCompleteSignature MultiplayerOnCreateSessionComplete;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnMultiplayerDestroySessionCompleteSignature OnMultiplayerDestroySessionComplete;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable)
+	FOnMultiplayerStartSessionCompleteSignature OnMultiplayerStartSessionComplete;
+
+	FOnMultiplayerJoinSessionCompleteSignature OnMultiplayerJoinSessionComplete;
+
+	FOnMultiplayerFindSessionsCompleteSignature OnMultiplayerFindSessions;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
 	bool bCreateSessionOnDestroy = false;

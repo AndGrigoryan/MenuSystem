@@ -4,6 +4,13 @@
 
 #include "MultiplayerSessionsSubsystem.h"
 
+#include "OnlineSessionSettings.h"
+
+
+UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+{
+	UE_LOG(LogTemp, Error, TEXT("UMenuWidget::UMenuWidget"));
+}
 
 void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
 {
@@ -15,7 +22,8 @@ void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
 
 	SetVisibility(ESlateVisibility::Visible);
 
-	bIsFocusable = true;
+	SetIsFocusable(true);
+	
 
 	UWorld* world = GetWorld();
 
@@ -46,6 +54,14 @@ void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
 		MultiplayerSessionsSubsystem->MultiplayerOnCreateSessionComplete.AddDynamic(this, &UMenuWidget::OnCreateSession);
+
+		MultiplayerSessionsSubsystem->OnMultiplayerDestroySessionComplete.AddDynamic(this, &UMenuWidget::OnDestroySession);
+
+		MultiplayerSessionsSubsystem->OnMultiplayerStartSessionComplete.AddDynamic(this, &UMenuWidget::OnStartSession);
+
+		MultiplayerSessionsSubsystem->OnMultiplayerJoinSessionComplete.AddUObject(this, &UMenuWidget::OnJoinSession);
+
+		MultiplayerSessionsSubsystem->OnMultiplayerFindSessions.AddUObject(this, &UMenuWidget::OnFindSession);
 	}
 
 }
@@ -101,6 +117,22 @@ void UMenuWidget::OnCreateSession(bool bWasSuccessful)
 		FString(TEXT("Session Created Successfully!"))
 	);
 
+}
+
+void UMenuWidget::OnDestroySession(bool bWasSuccessful)
+{
+}
+
+void UMenuWidget::OnStartSession(bool bWasSuccessful)
+{
+}
+
+void UMenuWidget::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
+{
+}
+
+void UMenuWidget::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
+{
 }
 
 void UMenuWidget::HostButtonClicked()
