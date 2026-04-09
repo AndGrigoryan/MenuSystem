@@ -11,7 +11,7 @@
 
 UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	UE_LOG(LogTemp, Error, TEXT("UMenuWidget::UMenuWidget"));
+
 }
 
 void UMenuWidget::MenuSetup
@@ -116,6 +116,9 @@ void UMenuWidget::OnCreateSession(bool bWasSuccessful)
 				FString(TEXT("Failed to Create Session!"))
 			);
 		}
+
+		HostButton->SetIsEnabled(true);
+
 		return;
 	}
 	if (GEngine)
@@ -141,16 +144,24 @@ void UMenuWidget::OnStartSession(bool bWasSuccessful)
 
 void UMenuWidget::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
-	
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		JoinButton->SetIsEnabled(true);
+	}
 }
 
 void UMenuWidget::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
-	
+	if (!bWasSuccessful || SessionResults.IsEmpty())
+	{
+		JoinButton->SetIsEnabled(true);
+	}
 }
 
 void UMenuWidget::HostButtonClicked()
 {
+	HostButton->SetIsEnabled(false);
+
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
 		MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);
@@ -159,6 +170,8 @@ void UMenuWidget::HostButtonClicked()
 
 void UMenuWidget::JoinButtonClicked()
 {
+	JoinButton->SetIsEnabled(false);
+
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
 		MultiplayerSessionsSubsystem->FindSessions(10000);

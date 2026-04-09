@@ -46,9 +46,6 @@ public:
 
 	FOnMultiplayerFindSessionsCompleteSignature OnMultiplayerFindSessionsComplete;
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
-	bool bCreateSessionOnDestroy = false;
-
 protected:
 
 	//
@@ -102,6 +99,12 @@ private:
 	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
 
 	FString PathToLobby = TEXT("");
+
+	bool bCreateSessionOnDestroy = false;
+
+	int32 LastNumPublicConnections;
+
+	FString LastMatchType;
 
 	//
 	// To add to the Online Session Interface delegate list.
