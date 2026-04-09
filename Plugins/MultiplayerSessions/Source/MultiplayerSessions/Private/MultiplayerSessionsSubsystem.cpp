@@ -53,7 +53,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, co
 	CreateSessionInternal(NumPublicConnections, InMatchType);
 }
 
-void UMultiplayerSessionsSubsystem::CreateSessionInternal(int32 NumPublicConnections, FString InMatchType)
+void UMultiplayerSessionsSubsystem::CreateSessionInternal(int32 NumPublicConnections, const FString& InMatchType)
 {
 	if (!IsValid(GetWorld()))
 	{
@@ -185,6 +185,7 @@ void UMultiplayerSessionsSubsystem::JoinSession(const FOnlineSessionSearchResult
 	if (!bjoinSessionStarted)
 	{
 		SessionInterface->ClearOnJoinSessionCompleteDelegate_Handle(JoinSessionCompleteDelegateHandle);
+		JoinSessionCompleteDelegateHandle.Reset();
 
 		OnMultiplayerJoinSessionComplete.Broadcast(EOnJoinSessionCompleteResult::UnknownError);
 	}
@@ -273,7 +274,7 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 		FindSessionsCompleteDelegateHandle.Reset();
 	}
 
-	if (LastSessionSearch->SearchResults.IsEmpty())
+	if (!LastSessionSearch.IsValid() || LastSessionSearch->SearchResults.IsEmpty())
 	{
 		OnMultiplayerFindSessionsComplete.Broadcast(TArray<FOnlineSessionSearchResult>(), false);
 		return;
@@ -305,35 +306,41 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 		JoinSessionCompleteDelegateHandle.Reset();
 	}
 
+	OnMultiplayerJoinSessionComplete.Broadcast(Result);
+
 	if (Result != EOnJoinSessionCompleteResult::Success)
 	{
 		return;
 	}
 
-	OnMultiplayerJoinSessionComplete.Broadcast(Result);
 
 	if (SessionInterface.IsValid())
 	{
 		FString address;
 
-		SessionInterface->GetResolvedConnectString(NAME_GameSession, address);
-
-		APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
-		if (playerController)
+		if (SessionInterface->GetResolvedConnectString(NAME_GameSession, address))
 		{
-			playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+			APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
+			if (playerController)
+			{
+				playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+			}
+		}
+		else
+		{
+			OnMultiplayerJoinSessionComplete.Broadcast(EOnJoinSessionCompleteResult::UnknownError);
 		}
 	}
 }
 
 void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	if (!SessionInterface.IsValid() && DestroySessionCompleteDelegateHandle.IsValid())
+	if (SessionInterface.IsValid() && DestroySessionCompleteDelegateHandle.IsValid())
 	{
 		SessionInterface->ClearOnDestroySessionCompleteDelegate_Handle(DestroySessionCompleteDelegateHandle);
 		DestroySessionCompleteDelegateHandle.Reset();
 	}
-	
+
 	if (bWasSuccessful && bCreateSessionOnDestroy)
 	{
 		bCreateSessionOnDestroy = false;
@@ -342,7 +349,7 @@ void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, 
 
 	OnMultiplayerDestroySessionComplete.Broadcast(bWasSuccessful);
 
-	if(GEngine)
+	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage
 		(

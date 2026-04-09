@@ -71,7 +71,7 @@ public:
 	//
 	void CreateSession(int32 NumPublicConnections, const FString& InMatchType, const FString& InLobbyPath = FString(TEXT("/Game/ThirdPerson/Maps/Lobby")));
 
-	void CreateSessionInternal(int32 NumPublicConnections, FString InMatchType);
+	void CreateSessionInternal(int32 NumPublicConnections, const FString& InMatchType);
 
 	void FindSessions(int32 MaxSearchResults);
 
