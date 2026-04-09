@@ -8,6 +8,8 @@
 
 #include "OnlineSubsystem.h"
 
+#include "Kismet/KismetSystemLibrary.h"
+
 
 UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
@@ -16,12 +18,13 @@ UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(Ob
 
 void UMenuWidget::MenuSetup
 (
+	TSoftObjectPtr<UWorld> InLobbyMap,
 	int32 InNumPublicConnections, 
-	FString InMatchType, 
-	FString LobbyPath
+	FString InMatchType
 )
 {
-	PathToLobby = FString::Printf(TEXT("%s?listen"), *LobbyPath);
+	PathToLobby = FString(*FPackageName::ObjectPathToPackageName(InLobbyMap.ToString()));
+	
 
 	NumPublicConnections = InNumPublicConnections;
 
@@ -164,7 +167,7 @@ void UMenuWidget::HostButtonClicked()
 
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
-		MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType);
+		MultiplayerSessionsSubsystem->CreateSession(NumPublicConnections, MatchType, PathToLobby);
 	}
 }
 

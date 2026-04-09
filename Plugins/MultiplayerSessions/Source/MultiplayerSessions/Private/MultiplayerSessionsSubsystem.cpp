@@ -48,8 +48,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, co
 		DestroySession();
 		return;
 	}
-
-	PathToLobby = InLobbyPath;
+	PathToLobby = FString::Printf(TEXT("%s?listen"), *InLobbyPath);
 	CreateSessionInternal(NumPublicConnections, InMatchType);
 }
 

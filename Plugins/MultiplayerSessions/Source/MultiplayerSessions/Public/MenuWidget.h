@@ -21,9 +21,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void MenuSetup
 	(
+		TSoftObjectPtr<UWorld> InLobbyMap,
 		int32 InNumPublicConnections = 4, 
-		FString InMatchType = FString(TEXT("FreeForAll")), 
-		FString LobbyPath = FString(TEXT("/Game/ThirdPerson/Maps/Lobby"))
+		FString InMatchType = FString(TEXT("FreeForAll"))
 	);
 
 protected:
