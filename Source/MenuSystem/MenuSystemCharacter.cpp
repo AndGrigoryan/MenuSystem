@@ -92,17 +92,17 @@ AMenuSystemCharacter::AMenuSystemCharacter()
 		OnlineSessionInterface = onlineSubsystem->GetSessionInterface();
 
 
-		if (GetWorld())
-		{
-			UKismetSystemLibrary::PrintString
-			(
-				GetWorld(),
-				FString::Printf(TEXT("Found subsystem %s"), *onlineSubsystem->GetSubsystemName().ToString()),
-				true,
-				true,
-				FLinearColor::Blue
-			);
-		}
+		//if (GetWorld())
+		//{
+		//	UKismetSystemLibrary::PrintString
+		//	(
+		//		GetWorld(),
+		//		FString::Printf(TEXT("Found subsystem %s"), *onlineSubsystem->GetSubsystemName().ToString()),
+		//		true,
+		//		true,
+		//		FLinearColor::Blue
+		//	);
+		//}
 
 	}
 
