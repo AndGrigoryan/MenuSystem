@@ -14,8 +14,15 @@ UMenuWidget::UMenuWidget(const FObjectInitializer& ObjectInitializer) : Super(Ob
 	UE_LOG(LogTemp, Error, TEXT("UMenuWidget::UMenuWidget"));
 }
 
-void UMenuWidget::MenuSetup(int32 InNumPublicConnections, FString InMatchType)
+void UMenuWidget::MenuSetup
+(
+	int32 InNumPublicConnections, 
+	FString InMatchType, 
+	FString LobbyPath
+)
 {
+	PathToLobby = FString::Printf(TEXT("%s?listen"), *LobbyPath);
+
 	NumPublicConnections = InNumPublicConnections;
 
 	MatchType = InMatchType;

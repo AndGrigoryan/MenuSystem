@@ -72,7 +72,7 @@ public:
 	//
 	// To handle session functionality. The Menu class will call these
 	//
-	void CreateSession(int32 NumPublicConnections, FString InMatchType);
+	void CreateSession(int32 NumPublicConnections, const FString& InMatchType, const FString& InLobbyPath = FString(TEXT("/Game/ThirdPerson/Maps/Lobby")));
 
 	void CreateSessionInternal(int32 NumPublicConnections, FString InMatchType);
 
@@ -100,6 +100,8 @@ private:
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 
 	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;
+
+	FString PathToLobby = TEXT("");
 
 	//
 	// To add to the Online Session Interface delegate list.

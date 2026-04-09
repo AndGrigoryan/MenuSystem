@@ -28,7 +28,7 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 
 }
 
-void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString InMatchType)
+void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, const FString& InMatchType, const FString& InLobbyPath)
 {
 	if (!SessionInterface.IsValid())
 	{
@@ -55,6 +55,7 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 		return;
 	}
 
+	PathToLobby = InLobbyPath;
 	CreateSessionInternal(NumPublicConnections, InMatchType);
 }
 
@@ -242,7 +243,7 @@ void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, b
 
 	if (bWasSuccessful)
 	{
-		world->ServerTravel(FString("/Game/ThirdPerson/Maps/Lobby?listen"), true);
+		world->ServerTravel(PathToLobby, true);
 	}
 }
 
