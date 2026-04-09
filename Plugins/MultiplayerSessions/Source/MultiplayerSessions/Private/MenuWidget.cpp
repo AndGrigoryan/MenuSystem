@@ -134,47 +134,12 @@ void UMenuWidget::OnStartSession(bool bWasSuccessful)
 
 void UMenuWidget::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
-	IOnlineSubsystem* subsystem = IOnlineSubsystem::Get();
-	if (subsystem)
-	{
-		IOnlineSessionPtr sessionInterface = subsystem->GetSessionInterface();
-
-		if (sessionInterface.IsValid())
-		{
-			FString address;
-			
-			sessionInterface->GetResolvedConnectString(NAME_GameSession, address);
-
-			APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
-			if (playerController)
-			{
-				playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
-			}
-		}
-	}
+	
 }
 
 void UMenuWidget::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
-	if (!IsValid(MultiplayerSessionsSubsystem))
-	{
-		return;
-	}
-
-	for (const auto& res : SessionResults)
-	{
-		FString id = res.GetSessionIdStr();
-		FString user = res.Session.OwningUserName;
-
-		FString settingsValue;
-		res.Session.SessionSettings.Get(FName("MatchType"), settingsValue);
-
-		if (settingsValue == MatchType)
-		{
-			MultiplayerSessionsSubsystem->JoinSession(res);
-			return;
-		}
-	}
+	
 }
 
 void UMenuWidget::HostButtonClicked()
@@ -190,6 +155,7 @@ void UMenuWidget::JoinButtonClicked()
 	if (IsValid(MultiplayerSessionsSubsystem))
 	{
 		MultiplayerSessionsSubsystem->FindSessions(10000);
+		MultiplayerSessionsSubsystem->SetSelectedMatchType(MatchType);
 	}
 }
 

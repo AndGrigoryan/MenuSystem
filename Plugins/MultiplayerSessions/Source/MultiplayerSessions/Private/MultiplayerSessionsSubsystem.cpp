@@ -28,7 +28,7 @@ UMultiplayerSessionsSubsystem::UMultiplayerSessionsSubsystem()
 
 }
 
-void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString MatchType)
+void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FString InMatchType)
 {
 	if (!SessionInterface.IsValid())
 	{
@@ -55,10 +55,10 @@ void UMultiplayerSessionsSubsystem::CreateSession(int32 NumPublicConnections, FS
 		return;
 	}
 
-	CreateSessionInternal(NumPublicConnections, MatchType);
+	CreateSessionInternal(NumPublicConnections, InMatchType);
 }
 
-void UMultiplayerSessionsSubsystem::CreateSessionInternal(int32 NumPublicConnections, FString MatchType)
+void UMultiplayerSessionsSubsystem::CreateSessionInternal(int32 NumPublicConnections, FString InMatchType)
 {
 	if (!IsValid(GetWorld()))
 	{
@@ -83,7 +83,7 @@ void UMultiplayerSessionsSubsystem::CreateSessionInternal(int32 NumPublicConnect
 	LastSessionSettings->bShouldAdvertise = true;
 	LastSessionSettings->bUsesPresence = true;
 	LastSessionSettings->bUseLobbiesIfAvailable = true;
-	LastSessionSettings->Set(FName("MatchType"), MatchType, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
+	LastSessionSettings->Set(FName("MatchType"), InMatchType, EOnlineDataAdvertisementType::ViaOnlineServiceAndPing);
 
 	const ULocalPlayer* localPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 
@@ -203,6 +203,16 @@ void UMultiplayerSessionsSubsystem::StartSession()
 {
 }
 
+void UMultiplayerSessionsSubsystem::SetSelectedMatchType(const FString& InMatchType)
+{
+	MatchType = InMatchType;
+}
+
+FString UMultiplayerSessionsSubsystem::GetSelectedMatchType() const
+{
+	return MatchType;
+}
+
 void UMultiplayerSessionsSubsystem::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
 	UWorld* world = GetWorld();
@@ -250,6 +260,21 @@ void UMultiplayerSessionsSubsystem::OnFindSessionsComplete(bool bWasSuccessful)
 	}
 
 	OnMultiplayerFindSessionsComplete.Broadcast(LastSessionSearch->SearchResults, bWasSuccessful);
+
+	for (const auto& res : LastSessionSearch->SearchResults)
+	{
+		FString id = res.GetSessionIdStr();
+		FString user = res.Session.OwningUserName;
+
+		FString settingsValue;
+		res.Session.SessionSettings.Get(FName("MatchType"), settingsValue);
+
+		if (settingsValue == MatchType)
+		{
+			JoinSession(res);
+			return;
+		}
+	}
 }
 
 void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result)
@@ -266,6 +291,19 @@ void UMultiplayerSessionsSubsystem::OnJoinSessionComplete(FName SessionName, EOn
 	}
 
 	OnMultiplayerJoinSessionComplete.Broadcast(Result);
+
+	if (SessionInterface.IsValid())
+	{
+		FString address;
+
+		SessionInterface->GetResolvedConnectString(NAME_GameSession, address);
+
+		APlayerController* playerController = GetGameInstance()->GetFirstLocalPlayerController();
+		if (playerController)
+		{
+			playerController->ClientTravel(address, ETravelType::TRAVEL_Absolute);
+		}
+	}
 }
 
 void UMultiplayerSessionsSubsystem::OnDestroySessionComplete(FName SessionName, bool bWasSuccessful)

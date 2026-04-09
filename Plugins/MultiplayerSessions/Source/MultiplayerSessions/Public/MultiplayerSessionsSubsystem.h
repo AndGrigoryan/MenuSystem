@@ -30,21 +30,6 @@ public:
 	UMultiplayerSessionsSubsystem();
 
 	//
-	// To handle session functionality. The Menu class will call these
-	//
-	void CreateSession(int32 NumPublicConnections, FString MatchType);
-
-	void CreateSessionInternal(int32 NumPublicConnections, FString MatchType);
-	
-	void FindSessions(int32 MaxSearchResults);
-
-	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
-
-	void DestroySession();
-
-	void StartSession();
-
-	//
 	// Our own custom delegates for the Menu class to bind callbacks to
 	//
 
@@ -81,7 +66,35 @@ protected:
 
 	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 
+
+public:
+#pragma region Session functionality
+	//
+	// To handle session functionality. The Menu class will call these
+	//
+	void CreateSession(int32 NumPublicConnections, FString InMatchType);
+
+	void CreateSessionInternal(int32 NumPublicConnections, FString InMatchType);
+
+	void FindSessions(int32 MaxSearchResults);
+
+	void JoinSession(const FOnlineSessionSearchResult& SessionResult);
+
+	void DestroySession();
+
+	void StartSession();
+#pragma endregion Session functionality
+
+	UFUNCTION(BlueprintCallable)
+	void SetSelectedMatchType(const FString& InMatchType);
+
+	UFUNCTION(BlueprintCallable)
+	FString GetSelectedMatchType() const;
+
+
 private:
+	FString MatchType = TEXT("FreeForAll");
+
 	IOnlineSessionPtr SessionInterface;
 
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
