@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Interfaces/OnlineSessionInterface.h"
+
+
 #include "MenuSystemCharacter.generated.h"
 
 class USpringArmComponent;
@@ -24,35 +27,35 @@ class AMenuSystemCharacter : public ACharacter
 	GENERATED_BODY()
 
 	/** Camera boom positioning the camera behind the character */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
-	
+
 protected:
 
 	/** Jump Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* JumpAction;
 
 	/** Move Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* MoveAction;
 
 	/** Look Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* LookAction;
 
 	/** Mouse Look Input Action */
-	UPROPERTY(EditAnywhere, Category="Input")
+	UPROPERTY(EditAnywhere, Category = "Input")
 	UInputAction* MouseLookAction;
 
 public:
 
 	/** Constructor */
-	AMenuSystemCharacter();	
+	AMenuSystemCharacter();
 
 protected:
 
@@ -70,19 +73,19 @@ protected:
 public:
 
 	/** Handles move inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoMove(float Right, float Forward);
 
 	/** Handles look inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoLook(float Yaw, float Pitch);
 
 	/** Handles jump pressed inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoJumpStart();
 
 	/** Handles jump pressed inputs from either controls or UI interfaces */
-	UFUNCTION(BlueprintCallable, Category="Input")
+	UFUNCTION(BlueprintCallable, Category = "Input")
 	virtual void DoJumpEnd();
 
 public:
@@ -92,5 +95,50 @@ public:
 
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+
+
+	// Pointer to the online session interface
+	IOnlineSessionPtr OnlineSessionInterface;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadWrite)
+	bool bCreateSessionOnDestroy = false;
+
+protected:
+	UFUNCTION(BlueprintCallable)
+	void CreateGameSession();
+
+	UFUNCTION(BlueprintCallable)
+	void JoinGameSession();
+
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+	void OnDestroySessionComplete(FName SessionName, bool bWasSuccessful);
+
+	void OnFindSessionsComplete(bool bWasSuccessful);
+
+	void CreateSessionInternal();
+
+	void OnJoinSessionComplete(FName SessionName, EOnJoinSessionCompleteResult::Type Result);
+	 
+	void OnNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType, const FString& ErrorString);
+
+	void OnTravelFailure(UWorld* World, ETravelFailure::Type FailureType, const FString& ErrorString);
+private:
+
+	FDelegateHandle CreateSessionCompleteDelegateHandle;
+	FOnCreateSessionCompleteDelegate OnCreateSessionCompleteDelegate;
+
+	FDelegateHandle DestroySessionCompleteDelegateHandle;
+	FOnDestroySessionCompleteDelegate OnDestroySessionCompleteDelegate;
+
+	FDelegateHandle FindSessionsCompleteDelegateHandle;
+	FOnFindSessionsCompleteDelegate OnFindSessionsCompleteDelegate;
+
+	TSharedPtr<FOnlineSessionSearch> SessionSearch;
+
+	FDelegateHandle JoinSessionCompleteDelegateHandle;
+	FOnJoinSessionCompleteDelegate OnJoinSessionCompleteDelegate;
+
+
 };
 

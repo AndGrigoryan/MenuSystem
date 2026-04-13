@@ -18,8 +18,11 @@ public class MenuSystem : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate"
-		});
+			"Slate",
+			"OnlineSubsystemSteam",
+            "OnlineSubsystem",
+            "OnlineSubsystemUtils"
+        });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
